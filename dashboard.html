@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Aura Watches — AI Social Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F5F1E8;
+            --pale-beige: #F8F4E9;
+            --light-gray: #E8E5DE;
+            --warm-white: #FEFCF7;
+            --gold-accent: #D4AF37;
+            --soft-gold: #F4E4BC;
+            --navy-blue: #0A2647;
+            --primary-color: #0A2647;
+            --secondary-color: #D4AF37;
+            --accent-color: #B5933F;
+            --sky-blue-light: #E6F2FF;
+            --sky-blue-medium: #CCE5FF;
+            --sky-blue-dark: #4FC3F7;
+        }
+        
+        body { 
+            background-color: var(--warm-white);
+            min-height: 100vh; 
+            color: var(--navy-blue);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+            position: relative;
+            background: url('Background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            backdrop-filter: brightness(0.9);
+        }
+        
+        /* Abstract Wave Background */
+        #wave-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                var(--cream) 0%, 
+                var(--pale-beige) 25%, 
+                var(--light-gray) 50%, 
+                var(--pale-beige) 75%, 
+                var(--cream) 100%);
+            border-radius: 40% 30% 50% 40%;
+            opacity: 0.15;
+            animation: waveMove 20s infinite linear;
+        }
+        
+        .wave-1 { top: 10%; left: -50%; height: 70%; transform: rotate(15deg); animation-duration: 25s; }
+        .wave-2 { top: 30%; left: -60%; height: 60%; transform: rotate(-10deg); animation-duration: 30s; animation-delay: 5s; }
+        .wave-3 { top: 50%; left: -40%; height: 50%; transform: rotate(5deg); animation-duration: 35s; animation-delay: 10s; }
+        
+        @keyframes waveMove {
+            0% { transform: translateX(0) rotate(15deg); }
+            100% { transform: translateX(50%) rotate(15deg); }
+        }
+        
+        /* Gold accent lines */
+        .gold-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold-accent), transparent);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            z-index: -1;
+        }
+        .line-1 { top: 25%; left: 10%; width: 40%; transform: rotate(-15deg); animation: lineFloat 8s infinite ease-in-out; }
+        .line-2 { top: 60%; right: 15%; width: 35%; transform: rotate(10deg); animation: lineFloat 10s infinite ease-in-out reverse; }
+        .line-3 { top: 75%; left: 5%; width: 30%; transform: rotate(-5deg); animation: lineFloat 12s infinite ease-in-out; }
+        
+        @keyframes lineFloat {
+            0%,100% { opacity: 0.3; transform: translateY(0) rotate(var(--rotation)); }
+            50% { opacity: 0.7; transform: translateY(-10px) rotate(var(--rotation)); }
+        }
+        
+        /* Glass Panel – refined for touch */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(40px) saturate(150%);
+            -webkit-backdrop-filter: blur(40px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            border-left: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 32px;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.1);
+            color: var(--navy-blue);
+            transition: all 0.3s cubic-bezier(0.2,0.9,0.4,1);
+        }
+        .glass-panel:active { transform: scale(0.98); }
+        @media (hover: hover) {
+            .glass-panel:hover { background: rgba(255,255,255,0.12); transform: translateY(-5px); box-shadow: 0 30px 60px rgba(0,0,0,0.15); }
+        }
+        
+        /* Text colors */
+        .text-primary { color: var(--primary-color) !important; font-weight: 500; }
+        .text-secondary { color: rgba(10, 38, 71, 0.6) !important; }
+        .text-gold { color: var(--accent-color); }
+        .text-silver { color: #8B8B8B; }
+        .text-rose { color: #C48B90; }
+        .text-blue { color: #6B95B0; }
+        
+        /* Time select – touch friendly */
+        .time-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--navy-blue);
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            outline: none;
+            min-width: 160px;
+            font-size: 14px;
+            min-height: 44px;
+        }
+        .time-select option { background: rgba(10, 38, 71, 0.95); color: white; }
+        
+        /* Glow effects */
+        .glow-gold { box-shadow: 0 0 20px rgba(212,175,55,0.1), inset 0 0 0 1px rgba(212,175,55,0.15); border-color: rgba(212,175,55,0.2); }
+        .glow-silver { box-shadow: 0 0 20px rgba(160,160,160,0.1), inset 0 0 0 1px rgba(160,160,160,0.15); border-color: rgba(160,160,160,0.2); }
+        .glow-rose { box-shadow: 0 0 20px rgba(244,187,199,0.1), inset 0 0 0 1px rgba(244,187,199,0.15); border-color: rgba(244,187,199,0.2); }
+        .glow-blue { box-shadow: 0 0 20px rgba(144,190,214,0.1), inset 0 0 0 1px rgba(144,190,214,0.15); border-color: rgba(144,190,214,0.2); }
+        
+        /* Floating animation – reduced motion safe */
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .floating { animation: float 6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .floating { animation: none; } }
+        
+        /* ========== MOBILE SIDEBAR ========== */
+        @media (max-width: 1023px) {
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 85%;
+                max-width: 340px;
+                height: 100vh;
+                z-index: 2000;
+                border-radius: 0 32px 32px 0;
+                overflow-y: auto;
+                background: rgba(250, 245, 240, 0.98);
+                backdrop-filter: blur(40px);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: 5px 0 30px rgba(0,0,0,0.2);
+                padding-bottom: 30px;
+            }
+            #sidebar.active { transform: translateX(0); }
+            .sidebar-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                backdrop-filter: blur(4px);
+                z-index: 1999;
+                display: none;
+            }
+            .sidebar-backdrop.active { display: block; }
+        }
+        
+        /* ========== CHATBOT – TOP RIGHT, RESPONSIVE ========== */
+        .chatbot-minimized {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1A3A5F 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(10,38,71,0.4);
+            z-index: 9999;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212,175,55,0.3);
+        }
+        .chatbot-minimized:active { transform: scale(0.9); }
+        .chatbot-expanded {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 420px;
+            max-width: calc(100vw - 60px);
+            height: 680px;
+            max-height: 80vh;
+            z-index: 10000;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+            border: 2px solid rgba(212,175,55,0.2);
+            display: none;
+            background: white;
+        }
+        @media (max-width: 640px) {
+            .chatbot-minimized { top: 20px; right: 20px; width: 55px; height: 55px; }
+            .chatbot-expanded { top: 20px; right: 20px; left: 20px; width: calc(100% - 40px); max-width: none; height: 80vh; }
+        }
+        
+        .chatbot-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1A3A5F 100%);
+            padding: 22px 24px;
+            border-bottom: 2px solid rgba(212,175,55,0.4);
+            position: relative;
+        }
+        .close-chatbot-x {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: rgba(255,255,255,0.2);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .close-chatbot-x:active { transform: scale(0.9); }
+        
+        .chatbot-messages {
+            height: 360px;
+            overflow-y: auto;
+            padding: 24px;
+            background: linear-gradient(180deg, #F8F4E9 0%, #F5F1E8 100%);
+        }
+        @media (max-width: 640px) {
+            .chatbot-messages { height: 50vh; }
+        }
+        
+        .message {
+            max-width: 85%;
+            margin: 14px 0;
+            padding: 16px 20px;
+            border-radius: 20px;
+            animation: fadeIn 0.3s ease;
+            line-height: 1.5;
+            font-size: 14px;
+            position: relative;
+        }
+        .user-message {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 6px;
+        }
+        .bot-message {
+            background: rgba(255,255,255,0.95);
+            color: var(--primary-color);
+            margin-right: auto;
+            border-bottom-left-radius: 6px;
+            border: 1px solid rgba(10,38,71,0.15);
+        }
+        
+        .quick-actions-container {
+            padding: 14px 16px;
+            background: linear-gradient(180deg, #F5F1E8 0%, #F0ECE3 100%);
+            border-top: 2px solid rgba(212,175,55,0.15);
+        }
+        .quick-action-chatbot-tiny {
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            border: 1px solid rgba(212,175,55,0.15);
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 10px 2px;
+            text-align: center;
+            cursor: pointer;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .quick-action-chatbot-tiny i { font-size: 18px; margin-bottom: 4px; }
+        .quick-action-chatbot-tiny p { font-size: 11px; font-weight: 500; color: var(--primary-color); }
+        
+        /* ========== RESPONSIVE CARD GRIDS ========== */
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 1024px) { .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        
+        /* ========== TOUCH TARGETS ========== */
+        button, .nav-btn, .quick-action, .time-select, .submit-btn, .delete-btn {
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* ========== RESPONSIVE TABLES ========== */
+        .overflow-x-auto {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* ========== MODAL – CENTERED ON MOBILE ========== */
+        .order-details-modal {
+            background: linear-gradient(135deg, #E6F2FF 0%, #CCE5FF 100%);
+            border: 2px solid rgba(144,202,249,0.5);
+            border-radius: 24px;
+            max-height: 85vh;
+            overflow-y: auto;
+            margin: 5vh 16px 0;
+        }
+        @media (max-width: 640px) {
+            .order-details-modal { width: calc(100% - 32px); }
+        }
+        
+        /* ========== FORM – STACK ON MOBILE ========== */
+        @media (max-width: 768px) {
+            .grid-cols-1.lg\:grid-cols-2 { grid-template-columns: 1fr; }
+            .spec-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* ========== NAVIGATION ACTIVE STATE ========== */
+        .nav-btn.active {
+            background: rgba(212,175,55,0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        /* ========== PAGE TRANSITIONS ========== */
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0.3; } to { opacity: 1; } }
+        
+        /* ========== UTILITIES ========== */
+        .logo-aura {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color), var(--soft-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="p-3 md:p-5 lg:p-6">
+    <!-- Abstract Wave Background -->
+    <div id="wave-background">
+        <div class="wave wave-1"></div>
+        <div class="wave wave-2"></div>
+        <div class="wave wave-3"></div>
+        <div class="gold-line line-1" style="--rotation: -15deg;"></div>
+        <div class="gold-line line-2" style="--rotation: 10deg;"></div>
+        <div class="gold-line line-3" style="--rotation: -5deg;"></div>
+        <div class="gradient-overlay"></div>
+    </div>
+    
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
+    
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 relative">
+        
+        <!-- ========== SIDEBAR (collapsible on mobile) ========== -->
+        <aside id="sidebar" class="lg:col-span-3 glass-panel p-5 lg:p-6 h-fit lg:h-[90vh] lg:sticky top-6 transition-all">
+            <!-- Mobile close button inside sidebar -->
+            <div class="flex justify-between items-center lg:hidden mb-6">
+                <div class="flex items-center">
+                    <div class="logo-container w-10 h-10 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-700 flex items-center justify-center mr-3">
+                        <img src="aura.png" alt="Aura" class="w-full h-full object-contain" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-clock text-white\'></i>';">
+                    </div>
+                    <h2 class="text-xl font-bold logo-aura">Aura</h2>
+                </div>
+                <button onclick="closeSidebar()" class="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-times text-primary text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex items-center mb-8 max-lg:mt-2">
+                <div class="logo-container w-12 h-12 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-700 flex items-center justify-center mr-3 shadow-lg">
+                    <img src="aura.png" alt="Aura Watches Logo" class="w-full h-full object-contain" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-clock text-white text-xl\'></i>';">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold logo-aura leading-tight">Aura Watches</h1>
+                    <p class="text-gray-500 text-xs sm:text-sm">Luxury Timepieces</p>
+                </div>
+            </div>
+            
+            <nav class="space-y-2 mb-8">
+                <button onclick="showPage('dashboard', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn active">
+                    <i class="fas fa-chart-line mr-3 text-gold"></i>
+                    <span class="text-primary font-medium">Dashboard</span>
+                </button>
+                <button onclick="showPage('recommendations', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn">
+                    <i class="fas fa-lightbulb mr-3 text-rose"></i>
+                    <span class="text-primary font-medium">AI Recommendations</span>
+                </button>
+                <button onclick="showPage('finances', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn">
+                    <i class="fas fa-chart-pie mr-3 text-blue"></i>
+                    <span class="text-primary font-medium">Financial Analytics</span>
+                </button>
+                <button onclick="showPage('watch', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn">
+                    <i class="fas fa-eye mr-3 text-silver"></i>
+                    <span class="text-primary font-medium">Watch System</span>
+                </button>
+                <button onclick="showPage('orders', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn">
+                    <i class="fas fa-shopping-bag mr-3 text-purple-500"></i>
+                    <span class="text-primary font-medium">Orders</span>
+                </button>
+                <button onclick="showPage('addwatch', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn">
+                    <i class="fas fa-plus-circle mr-3 text-emerald-600"></i>
+                    <span class="text-primary font-medium">Add & Delete Watches</span>
+                </button>
+                <button onclick="showPage('profile', this)" class="w-full text-left p-4 hover:bg-white/50 rounded-xl flex items-center nav-btn">
+                    <i class="fas fa-user mr-3 text-amber-600"></i>
+                    <span class="text-primary font-medium">Profile</span>
+                </button>
+            </nav>
+        </aside>
+        
+        <!-- ========== MAIN CONTENT ========== -->
+        <main class="lg:col-span-9 space-y-5 lg:space-y-6">
+            
+            <!-- Mobile Header with hamburger -->
+            <div class="lg:hidden flex items-center justify-between glass-panel p-3 sticky top-0 z-30 backdrop-blur-xl">
+                <div class="flex items-center">
+                    <button onclick="toggleSidebar()" class="w-11 h-11 rounded-xl bg-amber-500/10 flex items-center justify-center mr-3">
+                        <i class="fas fa-bars text-gold text-xl"></i>
+                    </button>
+                    <div>
+                        <span class="text-sm font-bold logo-aura">Aura Watches</span>
+                        <p class="text-xs text-gray-500">AI Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs bg-white/30 px-3 py-2 rounded-full"><i class="fas fa-circle text-green-500 text-[8px] mr-1"></i> Live</span>
+                </div>
+            </div>
+            
+            <!-- DASHBOARD PAGE -->
+            <div id="dashboard" class="page active">
+                <header class="flex flex-wrap justify-between items-center gap-3 mb-6">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold text-primary">Aura Watches Dashboard</h2>
+                        <p class="text-secondary text-sm md:text-base">AI-Powered Analytics for Luxury Timepieces</p>
+                    </div>
+                    <div class="glass-panel px-4 py-2 flex items-center flex-wrap gap-2">
+                        <i class="fas fa-clock text-gold mr-1"></i>
+                        <span class="text-primary text-sm mr-1">Time:</span>
+                        <select id="timeRange" class="time-select text-sm" onchange="updateDashboardData()">
+                            <option value="just_now">Just now</option>
+                            <option value="7_days">Last 7 days</option>
+                            <option value="14_days">Last 14 days</option>
+                            <option value="30_days" selected>Last 30 days</option>
+                            <option value="previous_month">Previous month</option>
+                            <option value="90_days">Last 90 days</option>
+                        </select>
+                    </div>
+                </header>
+                
+                <!-- AI Cards – responsive grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-panel glow-gold p-5 floating">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-secondary text-xs mb-2">Predicted New Followers</p>
+                                <h2 id="followersCount" class="text-2xl md:text-3xl font-bold text-gold">+8,420</h2>
+                                <p id="followersChange" class="text-emerald-600 text-xs mt-2"><i class="fas fa-arrow-up mr-1"></i> 22.5%</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center"><i class="fas fa-users text-gold text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="glass-panel glow-silver p-5 floating">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-secondary text-xs mb-2">Predicted Sales</p>
+                                <h2 id="salesAmount" class="text-2xl md:text-3xl font-bold text-silver">28,500 IQR</h2>
+                                <p id="salesChange" class="text-emerald-600 text-xs mt-2"><i class="fas fa-arrow-up mr-1"></i> 15.3%</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-gray-500/10 flex items-center justify-center"><i class="fas fa-money-bill-wave text-silver text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="glass-panel glow-rose p-5 floating">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-secondary text-xs mb-2">Top Sales Model</p>
+                                <h2 id="topModel" class="text-xl md:text-2xl font-bold text-rose">Aura Rose Gold</h2>
+                                <p id="modelRevenue" class="text-rose-600 text-xs mt-2">12,450 IQD revenue</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center"><i class="fas fa-crown text-rose text-lg"></i></div>
+                        </div>
+                    </div>
+                    <div class="glass-panel glow-blue p-5 floating">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-secondary text-xs mb-2">Total Orders</p>
+                                <h2 id="totalOrders" class="text-2xl md:text-3xl font-bold text-blue">148</h2>
+                                <p id="ordersChange" class="text-emerald-600 text-xs mt-2"><i class="fas fa-arrow-up mr-1"></i> 18 new</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center"><i class="fas fa-shopping-cart text-blue text-lg"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sentiment + Best Posting Times -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="glass-panel p-5">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center text-primary"><i class="fas fa-chart-pie mr-2 text-gold"></i>Customer Sentiment</h3>
+                        <div class="relative h-52 w-full">
+                            <canvas id="sentimentChart"></canvas>
+                        </div>
+                        <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                            <div><div id="positivePercent" class="text-xl font-bold text-emerald-600">72%</div><div class="text-xs text-secondary">Positive</div></div>
+                            <div><div id="neutralPercent" class="text-xl font-bold text-silver">18%</div><div class="text-xs text-secondary">Neutral</div></div>
+                            <div><div id="negativePercent" class="text-xl font-bold text-rose">10%</div><div class="text-xs text-secondary">Negative</div></div>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center text-primary"><i class="fas fa-clock mr-2 text-gold"></i>Best Posting Times (AI)</h3>
+                        <div class="space-y-3">
+                            <div class="flex flex-wrap items-center justify-between p-3 glass-panel bg-white/50">
+                                <div class="flex items-center"><div class="w-9 h-9 rounded-xl bg-gradient-to-r from-rose-400 to-pink-400 flex items-center justify-center mr-3"><i class="fab fa-instagram text-white"></i></div><div><p class="font-medium text-sm text-primary">Instagram</p><p id="instagramFormat" class="text-xs text-secondary">Best: <span class="text-rose">Lifestyle</span></p></div></div>
+                                <div class="text-right"><p id="instagramTime" class="font-bold text-sm text-primary">7-10 PM</p><p id="instagramAudience" class="text-xs text-emerald-600">Luxury Active</p></div>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between p-3 glass-panel bg-white/50">
+                                <div class="flex items-center"><div class="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center mr-3"><i class="fab fa-tiktok text-white"></i></div><div><p class="font-medium text-sm text-primary">TikTok</p><p id="tiktokFormat" class="text-xs text-secondary">Best: <span class="text-blue">Unboxing</span></p></div></div>
+                                <div class="text-right"><p id="tiktokTime" class="font-bold text-sm text-primary">3-6 PM</p><p id="tiktokAudience" class="text-xs text-emerald-600">Virality</p></div>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between p-3 glass-panel bg-white/50">
+                                <div class="flex items-center"><div class="w-9 h-9 rounded-xl bg-yellow-400 flex items-center justify-center mr-3"><i class="fab fa-snapchat text-white"></i></div><div><p class="font-medium text-sm text-primary">Snapchat</p><p id="snapchatFormat" class="text-xs text-secondary">Best: <span class="text-gold">BTS</span></p></div></div>
+                                <div class="text-right"><p id="snapchatTime" class="font-bold text-sm text-primary">9 PM-12 AM</p><p id="snapchatAudience" class="text-xs text-emerald-600">Young Luxury</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content Performance (scrollable table) -->
+                <div class="glass-panel p-5">
+                    <h3 class="text-lg font-semibold mb-4 text-primary">Content Performance Analysis</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[500px]">
+                            <thead><tr class="border-b border-white/50 text-secondary text-xs"><th class="text-left py-3">Platform</th><th class="text-left py-3">Best Content</th><th class="text-left py-3">Engagement</th><th class="text-left py-3">AI Rec.</th></tr></thead>
+                            <tbody class="divide-y divide-white/30">
+                                <tr><td class="py-3"><div class="flex items-center"><div class="w-7 h-7 rounded-full bg-gradient-to-r from-rose-400 to-pink-400 flex items-center justify-center mr-2"><i class="fab fa-instagram text-white text-xs"></i></div><span class="text-sm text-primary">Instagram</span></div></td><td class="py-3"><span id="instaContentType" class="px-2 py-1 text-xs rounded-full bg-rose-500/10 text-rose">Lifestyle Photos</span></td><td class="py-3"><div class="flex items-center"><div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2"><div id="instaBar" class="bg-rose-400 h-1.5 rounded-full" style="width:88%"></div></div><span id="instaRate" class="text-xs text-primary">88%</span></div></td><td class="py-3 text-xs text-emerald-600" id="instaRec">Luxury settings</td></tr>
+                                <tr><td class="py-3"><div class="flex items-center"><div class="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center mr-2"><i class="fab fa-tiktok text-white text-xs"></i></div><span class="text-sm text-primary">TikTok</span></div></td><td class="py-3"><span id="tiktokContentType" class="px-2 py-1 text-xs rounded-full bg-blue-500/10 text-blue">Unboxing Videos</span></td><td class="py-3"><div class="flex items-center"><div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2"><div id="tiktokBar" class="bg-blue-400 h-1.5 rounded-full" style="width:92%"></div></div><span id="tiktokRate" class="text-xs text-primary">92%</span></div></td><td class="py-3 text-xs text-emerald-600" id="tiktokRec">Satisfying unboxing</td></tr>
+                                <tr><td class="py-3"><div class="flex items-center"><div class="w-7 h-7 rounded-full bg-yellow-400 flex items-center justify-center mr-2"><i class="fab fa-snapchat text-white text-xs"></i></div><span class="text-sm text-primary">Snapchat</span></div></td><td class="py-3"><span id="snapchatContentType" class="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-gold">Behind-the-Scenes</span></td><td class="py-3"><div class="flex items-center"><div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2"><div id="snapchatBar" class="bg-amber-400 h-1.5 rounded-full" style="width:76%"></div></div><span id="snapchatRate" class="text-xs text-primary">76%</span></div></td><td class="py-3 text-xs text-emerald-600" id="snapchatRec">Watchmaking process</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI RECOMMENDATIONS PAGE (abbreviated for brevity, same responsive pattern) -->
+            <div id="recommendations" class="page">
+                <header class="mb-6"><h2 class="text-xl md:text-2xl font-bold text-primary">AI Content Recommendations</h2><p class="text-secondary text-sm">Personalized suggestions for Aura Watches</p></header>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-panel p-5"><h3 class="text-lg font-semibold mb-4 flex items-center text-gold"><i class="fas fa-robot mr-2"></i>AI Content Ideas</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-amber-500/10 rounded-xl"><div class="flex"><div class="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center mr-3"><i class="fas fa-video text-gold"></i></div><div><h4 class="font-bold text-sm text-primary">Luxury Lifestyle</h4><p class="text-xs text-secondary">Yachts, fine dining – 94%</p></div></div></div>
+                            <div class="p-3 bg-rose-500/10 rounded-xl"><div class="flex"><div class="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center mr-3"><i class="fas fa-image text-rose"></i></div><div><h4 class="font-bold text-sm text-primary">Macro Details</h4><p class="text-xs text-secondary">Craftsmanship – 87%</p></div></div></div>
+                            <div class="p-3 bg-blue-500/10 rounded-xl"><div class="flex"><div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center mr-3"><i class="fas fa-question-circle text-blue"></i></div><div><h4 class="font-bold text-sm text-primary">Testimonials</h4><p class="text-xs text-secondary">Real customers – 91%</p></div></div></div>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5"><h3 class="text-lg font-semibold mb-4 flex items-center text-gold"><i class="fas fa-calendar-alt mr-2"></i>Recommended Schedule</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">Monday</span><span class="text-xs font-bold text-gold">7:30 PM</span><span class="text-xs text-emerald-600">Lifestyle</span></div>
+                            <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">Wednesday</span><span class="text-xs font-bold text-gold">8:00 PM</span><span class="text-xs text-emerald-600">Carousel</span></div>
+                            <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">Friday</span><span class="text-xs font-bold text-gold">4:00 PM</span><span class="text-xs text-emerald-600">Unboxing</span></div>
+                            <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">Sunday</span><span class="text-xs font-bold text-gold">9:30 PM</span><span class="text-xs text-emerald-600">BTS</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FINANCIAL ANALYTICS PAGE (condensed for mobile) -->
+            <div id="finances" class="page">
+                <header class="mb-6"><h2 class="text-xl md:text-2xl font-bold text-primary">Financial Analytics</h2><p class="text-secondary text-sm">Yearly profit/loss analysis</p></header>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-panel p-5"><h3 class="text-lg font-semibold mb-4 text-primary">Yearly P/L</h3><div class="relative h-64 w-full"><canvas id="yearlyProfitChart"></canvas></div></div>
+                    <div class="glass-panel p-5"><h3 class="text-lg font-semibold mb-4 text-primary">Monthly Performance</h3><div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">January</span><span class="text-sm text-emerald-600">+42.5k IQR</span></div>
+                        <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">February</span><span class="text-sm text-emerald-600">+68k IQR</span></div>
+                        <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">March</span><span class="text-sm text-emerald-600">+52k IQR</span></div>
+                        <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">April</span><span class="text-sm text-rose">-15k IQR</span></div>
+                        <div class="flex justify-between p-2 glass-panel bg-white/50"><span class="text-sm text-primary">May</span><span class="text-sm text-emerald-600">+37.5k IQR</span></div>
+                    </div></div>
+                </div>
+            </div>
+            
+            <!-- WATCH SYSTEM PAGE -->
+            <div id="watch" class="page">
+                <header class="mb-6"><h2 class="text-xl md:text-2xl font-bold text-primary">Watch System & Monitoring</h2><p class="text-secondary text-sm">Real-time monitoring</p></header>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div class="glass-panel p-5"><h3 class="text-md font-semibold mb-3 flex"><i class="fas fa-eye mr-2 text-gold"></i>Live Social</h3>
+                        <div class="space-y-2"><div class="flex items-center justify-between"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center mr-2"><i class="fas fa-check text-emerald-600 text-xs"></i></div><span class="text-sm text-primary">Instagram</span></div><span class="text-xs text-emerald-600">42 new</span></div>
+                        <div class="flex items-center justify-between"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center mr-2"><i class="fas fa-check text-emerald-600 text-xs"></i></div><span class="text-sm text-primary">TikTok</span></div><span class="text-xs text-emerald-600">128 likes</span></div></div>
+                    </div>
+                    <div class="glass-panel p-5"><h3 class="text-md font-semibold mb-3 flex"><i class="fas fa-bell mr-2 text-rose"></i>Alerts</h3>
+                        <div class="space-y-2"><div class="p-2 bg-rose-500/10 rounded text-xs">🔥 Luxury trend +42%</div><div class="p-2 bg-amber-500/10 rounded text-xs">⭐ Rose Gold spike</div></div>
+                    </div>
+                    <div class="glass-panel p-5"><h3 class="text-md font-semibold mb-3 flex"><i class="fas fa-tachometer-alt mr-2 text-blue"></i>Metrics</h3>
+                        <div class="space-y-3"><div class="flex justify-between text-sm"><span class="text-secondary">Engagement</span><span class="text-emerald-600">5.8%</span></div><div class="h-1.5 bg-gray-200 rounded-full"><div class="bg-emerald-400 w-[88%] h-1.5 rounded-full"></div></div></div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 mt-6"><h3 class="text-lg font-semibold mb-4 text-primary">Controls</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button onclick="startMonitoring()" class="glass-panel p-4 flex flex-col items-center justify-center"><i class="fas fa-play-circle text-3xl text-emerald-600 mb-2"></i><span class="font-medium text-primary">Start Monitoring</span></button>
+                        <button onclick="pauseAlerts()" class="glass-panel p-4 flex flex-col items-center justify-center"><i class="fas fa-pause-circle text-3xl text-amber-600 mb-2"></i><span class="font-medium text-primary">Pause Alerts</span></button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ORDERS PAGE (responsive cards) -->
+            <div id="orders" class="page">
+                <header class="mb-6">
+                    <div class="flex flex-wrap justify-between items-center">
+                        <div><h2 class="text-xl md:text-2xl font-bold text-primary">My Orders</h2><p class="text-secondary text-sm">Track and manage orders</p></div>
+                        <button onclick="refreshOrders()" class="glass-panel px-4 py-2 hover:bg-white/50 text-sm"><i class="fas fa-sync-alt mr-2"></i>Refresh</button>
+                    </div>
+                    <div class="flex mt-4 border-b border-white/30">
+                        <button onclick="filterOrders('new')" id="newTab" class="tab-btn active px-5 py-2 font-bold text-primary border-b-2 border-gold mr-4 text-sm">New</button>
+                        <button onclick="filterOrders('delivered')" id="deliveredTab" class="tab-btn px-5 py-2 font-medium text-secondary border-b-2 border-transparent text-sm">Delivered</button>
+                    </div>
+                </header>
+                <div id="orderCardsContainer" class="space-y-4"></div>
+                <div id="noOrdersMessage" class="text-center py-12 text-secondary hidden"><i class="fas fa-box-open text-4xl mb-4 text-gray-300"></i><p class="text-lg">No orders found</p></div>
+            </div>
+            
+            <!-- ADD WATCH PAGE (form fully responsive) -->
+            <div id="addwatch" class="page">
+                <header class="mb-6"><h2 class="text-xl md:text-2xl font-bold text-primary">Add New Watch to Collection</h2><p class="text-secondary text-sm">Add a new luxury timepiece to the website</p></header>
+                <div class="glass-panel p-5">
+                    <h3 class="text-lg font-semibold mb-4 text-primary">Watch Details Form</h3>
+                    <form id="addWatchForm" onsubmit="addWatchToSite(event)">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <div class="form-group mb-4"><label class="form-label text-sm">Watch Model Name</label><input type="text" class="form-input w-full p-3 border border-white/30 rounded-xl bg-white/50" placeholder="e.g., Aura Rose Gold" required></div>
+                                <div class="form-group mb-4"><label class="form-label text-sm">Collection Type</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <label class="flex items-center p-3 glass-panel bg-white/50 rounded-xl"><input type="radio" name="collectionType" value="men" class="mr-2" checked><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center mr-2"><i class="fas fa-male text-blue"></i></div><span class="text-xs text-primary">Men's</span></div></label>
+                                        <label class="flex items-center p-3 glass-panel bg-white/50 rounded-xl"><input type="radio" name="collectionType" value="women" class="mr-2"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center mr-2"><i class="fas fa-female text-rose"></i></div><span class="text-xs text-primary">Women's</span></div></label>
+                                    </div>
+                                </div>
+                                <div class="form-group mb-4"><label class="form-label text-sm">Price (IQR)</label><input type="number" class="form-input w-full p-3 border border-white/30 rounded-xl bg-white/50" placeholder="e.g., 2500" required></div>
+                                <div class="form-group mb-4"><label class="form-label text-sm">Description</label><textarea class="form-input w-full p-3 border border-white/30 rounded-xl bg-white/50" rows="3" placeholder="Watch features..."></textarea></div>
+                            </div>
+                            <div>
+                                <div class="form-group mb-4"><label class="form-label text-sm">Watch Image</label>
+                                    <div class="image-upload-container border-2 border-dashed border-gold/30 rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('watchImage').click()">
+                                        <input type="file" id="watchImage" accept="image/*" class="hidden" onchange="previewImage(event)">
+                                        <div class="flex flex-col items-center"><div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-2"><i class="fas fa-camera text-2xl text-gold"></i></div><p class="text-xs text-primary">Click to upload</p></div>
+                                        <img id="imagePreview" class="image-preview max-h-40 mt-3 hidden" alt="Preview">
+                                    </div>
+                                </div>
+                                <div class="form-group mb-4"><label class="form-label text-sm">Quantity</label><input type="number" class="form-input w-full p-3 border border-white/30 rounded-xl bg-white/50" placeholder="e.g., 50" min="1" required></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6"><button type="submit" class="submit-btn navy-blue-btn px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium"><i class="fas fa-plus-circle mr-2"></i>Add Watch</button></div>
+                    </form>
+                    <div id="successMessage" class="mt-6 p-4 bg-emerald-500/10 rounded-xl hidden"><div class="flex items-center"><div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center mr-3"><i class="fas fa-check text-emerald-600"></i></div><div><h4 class="font-bold text-emerald-700">Watch Added!</h4><p class="text-sm text-emerald-600">Successfully added to collection.</p></div></div></div>
+                </div>
+                <!-- Delete Watch Section -->
+                <div class="glass-panel p-5 mt-6">
+                    <h3 class="text-lg font-semibold mb-4 text-primary">Delete Watch from Collection</h3>
+                    <div id="deleteWatchSection" class="overflow-x-auto"></div>
+                    <div id="noWatchesMessage" class="text-center py-8 text-secondary"><i class="fas fa-clock text-4xl mb-4 text-gray-300"></i><p>No watches found</p></div>
+                </div>
+            </div>
+            
+            <!-- PROFILE PAGE -->
+            <div id="profile" class="page">
+                <header class="mb-6"><h2 class="text-xl md:text-2xl font-bold text-primary">Admin Profile</h2><p class="text-secondary text-sm">Manage your account</p></header>
+                <div class="glass-panel p-6">
+                    <div class="flex flex-col items-center">
+                        <div class="relative mb-4"><img id="adminProfilePic" src="https://ui-avatars.com/api/?name=Aura+Admin&background=0A2647&color=fff&size=120" class="w-28 h-28 rounded-full border-4 border-gold/30 object-cover"><button onclick="changeProfilePicture()" class="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-camera text-primary"></i></button></div>
+                        <h3 class="text-2xl font-bold text-primary mb-2" id="adminName">Aura Admin</h3>
+                        <p class="text-secondary mb-6" id="adminEmailDisplay">admin@aurawatches.com</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div><label class="form-label text-sm">Full Name</label><input type="text" id="adminFullName" class="form-input w-full p-3 border rounded-xl bg-white/50" value="Aura Admin"></div>
+                        <div><label class="form-label text-sm">Email</label><input type="email" id="adminEmail" class="form-input w-full p-3 border rounded-xl bg-white/50" value="admin@aurawatches.com"></div>
+                        <div class="flex justify-between mt-4"><button onclick="updateAdminProfile()" class="px-6 py-3 navy-blue-btn rounded-xl bg-primary text-white"><i class="fas fa-user-edit mr-2"></i>Update</button><button onclick="saveSecuritySettings()" class="px-6 py-3 navy-blue-btn rounded-xl bg-primary text-white"><i class="fas fa-shield-alt mr-2"></i>Security</button></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- CHATBOT – TOP RIGHT -->
+    <div id="chatbotMinimized" class="chatbot-minimized" onclick="toggleChatbot()"><i class="fas fa-robot text-white text-2xl"></i></div>
+    <div id="chatbotExpanded" class="chatbot-expanded" style="display: none;">
+        <div class="chatbot-header relative">
+            <div class="flex items-center"><div class="w-12 h-12 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 flex items-center justify-center mr-3"><i class="fas fa-robot text-white text-lg"></i></div><div><h3 class="font-bold text-white text-lg">Aura AI</h3><p class="text-xs text-white/90">Premium Luxury Analytics</p></div></div>
+            <button onclick="toggleChatbot()" class="close-chatbot-x"><i class="fas fa-times text-white text-lg"></i></button>
+        </div>
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="empty-chat-state" id="emptyChatState"><div class="empty-chat-icon"><i class="fas fa-comments text-4xl text-gray-400"></i></div><h4 class="font-bold text-primary text-lg mb-3">Welcome to Aura AI</h4><p class="text-sm text-secondary mb-6">I'm here to help with your luxury watch business.</p></div>
+        </div>
+        <div class="quick-actions-container">
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="quickAction('analyze')" class="quick-action-chatbot-tiny"><i class="fas fa-chart-bar text-amber-600"></i><p>Analyze</p></button>
+                <button onclick="quickAction('generate')" class="quick-action-chatbot-tiny"><i class="fas fa-robot text-rose"></i><p>Generate</p></button>
+                <button onclick="quickAction('optimize')" class="quick-action-chatbot-tiny"><i class="fas fa-magic text-blue"></i><p>Optimize</p></button>
+                <button onclick="quickAction('report')" class="quick-action-chatbot-tiny"><i class="fas fa-file-alt text-emerald-600"></i><p>Report</p></button>
+                <button onclick="quickAction('customer')" class="quick-action-chatbot-tiny"><i class="fas fa-users text-purple-500"></i><p>Customers</p></button>
+                <button onclick="quickAction('inventory')" class="quick-action-chatbot-tiny"><i class="fas fa-boxes text-indigo-500"></i><p>Stock</p></button>
+            </div>
+        </div>
+        <div class="chatbot-input-container p-3 bg-gray-100">
+            <div class="flex"><input type="text" id="chatInput" placeholder="Ask about Aura Watches..." class="flex-grow p-3 border rounded-l-xl focus:outline-none" onkeypress="if(event.key==='Enter') sendMessage()"><button onclick="sendMessage()" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-5 rounded-r-xl"><i class="fas fa-paper-plane"></i></button></div>
+        </div>
+    </div>
+    
+    <!-- ORDER DETAILS MODAL -->
+    <div id="orderDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 pt-8 overflow-y-auto">
+        <div class="order-details-modal max-w-4xl w-full bg-white rounded-2xl">
+            <div class="order-details-header bg-gradient-to-r from-sky-400 to-sky-500 p-5 rounded-t-2xl flex justify-between items-center">
+                <div><h3 class="text-xl font-semibold text-white">Order Details</h3><p id="orderDetailsSubtitle" class="text-sm text-white/90"></p></div>
+                <button onclick="closeOrderModal()" class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center"><i class="fas fa-times text-white"></i></button>
+            </div>
+            <div id="orderDetailsContent" class="p-5"></div>
+        </div>
+    </div>
+
+    <script>
+        // ========== GLOBAL FUNCTIONS – RESPONSIVE & TOUCH OPTIMIZED ==========
+        
+        // ---------- SIDEBAR TOGGLE ----------
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebarBackdrop').classList.toggle('active');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebarBackdrop').classList.remove('active');
+        }
+        
+        // ---------- PAGE NAVIGATION ----------
+        function showPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            closeSidebar(); // auto close sidebar on mobile after navigation
+            // page specific init
+            if (pageId === 'orders') { initializeDemoOrders(); displayOrderCards(); }
+            if (pageId === 'profile') loadProfile();
+            if (pageId === 'addwatch') loadWatchesForDeletion();
+        }
+        
+        // ---------- CHATBOT ----------
+        function toggleChatbot() {
+            const mini = document.getElementById('chatbotMinimized');
+            const exp = document.getElementById('chatbotExpanded');
+            if (exp.style.display === 'none') {
+                exp.style.display = 'flex';
+                exp.style.flexDirection = 'column';
+                mini.style.display = 'none';
+            } else {
+                exp.style.display = 'none';
+                mini.style.display = 'flex';
+            }
+        }
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addMessage(msg, 'user');
+            input.value = '';
+            setTimeout(() => processAIResponse(msg), 800);
+        }
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender}-message`;
+            div.innerHTML = sender === 'user' ? `<div class="font-bold mb-1 text-white">You</div><p class="text-white">${text}</p>` : `<div class="font-bold mb-1 text-primary">Aura AI</div><p class="text-primary">${text}</p>`;
+            document.getElementById('chatMessages').appendChild(div);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+        function processAIResponse(msg) {
+            let reply = "I'm your Aura AI assistant. Ask about posting times, sales, or collections.";
+            const l = msg.toLowerCase();
+            if (l.includes('time') && l.includes('post')) reply = "⏰ Best luxury posting times: Instagram 7–10PM, TikTok 3–6PM, Snapchat 9PM–12AM.";
+            else if (l.includes('rose')) reply = "🌹 Rose Gold is #1 – 300% higher engagement. Revenue 12,450 IQD this week.";
+            else reply = "I can help with orders, inventory, financials, or content strategy. Please be more specific.";
+            addMessage(reply, 'bot');
+        }
+        function quickAction(action) {
+            let q = '';
+            if (action === 'analyze') q = 'Analyze current luxury watch trends';
+            if (action === 'generate') q = 'Generate content ideas for Instagram';
+            if (action === 'optimize') q = 'Optimize posting schedule';
+            if (action === 'report') q = 'Give me a weekly performance report';
+            if (action === 'customer') q = 'Tell me about customer insights';
+            if (action === 'inventory') q = 'What is my current inventory status?';
+            if (!document.getElementById('chatbotExpanded').style.display || document.getElementById('chatbotExpanded').style.display === 'none') toggleChatbot();
+            document.getElementById('chatInput').value = q;
+            sendMessage();
+        }
+        
+        // ---------- ORDERS (simplified from original) ----------
+        let currentOrderFilter = 'new';
+        function initializeDemoOrders() {
+            if (loadOrdersFromLocalStorage().length === 0) createDemoOrders();
+        }
+        function createDemoOrders() {
+            const demo = [ { id: '1234', customer: { name: 'John Smith', email: 'john@example.com', phone: '+964 123 456 7890', address: 'Baghdad' }, items: [{ name: 'Aura Rose Gold', price: 2500, quantity: 1 }], total: 2500, status: 'pending', date: '2024-06-24', shipping: 'Express - 50 IQD', paymentType: 'Card' } ];
+            saveOrdersToLocalStorage(demo);
+        }
+        function loadOrdersFromLocalStorage() { try { return JSON.parse(localStorage.getItem('auraOrders')) || []; } catch(e){ return []; } }
+        function saveOrdersToLocalStorage(o) { localStorage.setItem('auraOrders', JSON.stringify(o)); }
+        function filterOrders(filter) {
+            currentOrderFilter = filter;
+            document.getElementById('newTab').classList.toggle('active', filter==='new');
+            document.getElementById('deliveredTab').classList.toggle('active', filter==='delivered');
+            displayOrderCards();
+        }
+        function displayOrderCards() {
+            const orders = loadOrdersFromLocalStorage();
+            const container = document.getElementById('orderCardsContainer');
+            container.innerHTML = '';
+            let filtered = orders.filter(o => currentOrderFilter==='new' ? ['pending','processing'].includes(o.status) : o.status==='completed');
+            if (filtered.length===0) { document.getElementById('noOrdersMessage').classList.remove('hidden'); container.classList.add('hidden'); return; }
+            document.getElementById('noOrdersMessage').classList.add('hidden'); container.classList.remove('hidden');
+            filtered.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-4';
+                card.innerHTML = `<div class="flex justify-between"><div><h4 class="font-bold text-primary">Order #${order.id}</h4><p class="text-xs text-secondary">${order.date}</p></div><span class="px-2 py-1 text-xs rounded-full ${order.status==='completed'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${order.status}</span></div>
+                <div class="mt-2 text-sm"><span class="text-secondary">Total:</span> <span class="font-bold text-primary">${order.total} IQD</span></div>
+                <div class="mt-3"><button onclick="viewOrderDetails('${order.id}')" class="w-full border border-gold text-gold py-2 rounded-xl text-sm">View Details</button></div>`;
+                container.appendChild(card);
+            });
+        }
+        function viewOrderDetails(orderId) {
+            const order = loadOrdersFromLocalStorage().find(o => o.id === orderId);
+            if (!order) return;
+            document.getElementById('orderDetailsSubtitle').innerText = `Order #${order.id} • ${order.date}`;
+            document.getElementById('orderDetailsContent').innerHTML = `<div class="space-y-3"><p><span class="font-medium">Customer:</span> ${order.customer.name}</p><p><span class="font-medium">Items:</span> ${order.items.map(i=>i.name+' x'+i.quantity).join(', ')}</p><p><span class="font-medium">Total:</span> ${order.total} IQD</p><p><span class="font-medium">Status:</span> ${order.status}</p></div>`;
+            document.getElementById('orderDetailsModal').classList.remove('hidden');
+        }
+        function closeOrderModal() { document.getElementById('orderDetailsModal').classList.add('hidden'); }
+        function refreshOrders() { displayOrderCards(); showNotification('Orders refreshed!', 'success'); }
+        // ---------- PROFILE ----------
+        function loadProfile() { 
+            let prof = JSON.parse(localStorage.getItem('auraAdminProfile')) || { name: 'Aura Admin', email: 'admin@aurawatches.com' };
+            document.getElementById('adminName').innerText = prof.name;
+            document.getElementById('adminEmailDisplay').innerText = prof.email;
+            document.getElementById('adminFullName').value = prof.name;
+            document.getElementById('adminEmail').value = prof.email;
+        }
+        function updateAdminProfile() {
+            let name = document.getElementById('adminFullName').value.trim();
+            let email = document.getElementById('adminEmail').value.trim();
+            if (!name || !email) { showNotification('Please fill all fields', 'error'); return; }
+            localStorage.setItem('auraAdminProfile', JSON.stringify({name, email}));
+            loadProfile();
+            showNotification('Profile updated', 'success');
+        }
+        function changeProfilePicture() {
+            let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+            input.onchange = e => {
+                let file = e.target.files[0];
+                if (file) {
+                    let reader = new FileReader();
+                    reader.onload = ev => { document.getElementById('adminProfilePic').src = ev.target.result; localStorage.setItem('auraProfilePicture', ev.target.result); showNotification('Picture updated', 'success'); };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        function saveSecuritySettings() { showNotification('Security settings saved (demo)', 'success'); }
+        // ---------- WATCH SYSTEM ----------
+        let monitoringActive = false, alertsPaused = false;
+        function startMonitoring() { monitoringActive = true; alertsPaused = false; showNotification('Monitoring started', 'success'); }
+        function pauseAlerts() { alertsPaused = !alertsPaused; showNotification(alertsPaused?'Alerts paused':'Alerts resumed', 'warning'); }
+        // ---------- ADD / DELETE WATCH ----------
+        function previewImage(e) {
+            let file = e.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = ev => { let img = document.getElementById('imagePreview'); img.src = ev.target.result; img.classList.remove('hidden'); };
+                reader.readAsDataURL(file);
+            }
+        }
+        function addWatchToSite(e) {
+            e.preventDefault();
+            let watches = JSON.parse(localStorage.getItem('auraWatches')) || [];
+            watches.push({ id: Date.now(), name: 'New Watch', collectionType: 'men', price: 1000, quantity: 10, description: '', dateAdded: new Date().toLocaleDateString() });
+            localStorage.setItem('auraWatches', JSON.stringify(watches));
+            document.getElementById('successMessage').classList.remove('hidden');
+            setTimeout(() => document.getElementById('successMessage').classList.add('hidden'), 3000);
+            loadWatchesForDeletion();
+            showNotification('Watch added!', 'success');
+        }
+        function loadWatchesForDeletion() {
+            let watches = JSON.parse(localStorage.getItem('auraWatches')) || [];
+            let div = document.getElementById('deleteWatchSection');
+            if (!watches.length) { div.innerHTML = ''; document.getElementById('noWatchesMessage').classList.remove('hidden'); return; }
+            document.getElementById('noWatchesMessage').classList.add('hidden');
+            let html = '<table class="w-full min-w-[500px]"><thead><tr class="border-b text-secondary text-xs"><th class="text-left py-2">Name</th><th>Collection</th><th>Price</th><th>Qty</th><th>Action</th></tr></thead><tbody>';
+            watches.forEach(w => { html += `<tr><td class="py-2 text-sm">${w.name}</td><td><span class="px-2 py-1 text-xs rounded-full ${w.collectionType==='men'?'bg-blue-100':'bg-pink-100'}">${w.collectionType}</span></td><td class="text-sm">${w.price} IQR</td><td class="text-sm">${w.quantity}</td><td><button onclick="deleteWatch(${w.id})" class="delete-btn bg-rose-500 text-white px-3 py-1 rounded text-xs"><i class="fas fa-trash"></i> Delete</button></td></tr>`; });
+            html += '</tbody></table>';
+            div.innerHTML = html;
+        }
+        function deleteWatch(id) {
+            let watches = JSON.parse(localStorage.getItem('auraWatches')) || [];
+            watches = watches.filter(w => w.id != id);
+            localStorage.setItem('auraWatches', JSON.stringify(watches));
+            loadWatchesForDeletion();
+            showNotification('Watch deleted', 'success');
+        }
+        // ---------- DASHBOARD DATA UPDATE (simplified) ----------
+        function updateDashboardData() {
+            showNotification('Dashboard updated', 'success');
+        }
+        // ---------- NOTIFICATION (simple) ----------
+        function showNotification(msg, type) {
+            alert(msg); // simplified for demo
+        }
+        // ---------- CHARTS ----------
+        let sentimentChart, yearlyProfitChart;
+        function initializeCharts() {
+            if (document.getElementById('sentimentChart')) {
+                sentimentChart = new Chart(document.getElementById('sentimentChart'), {
+                    type: 'doughnut',
+                    data: { labels: ['Positive','Neutral','Negative'], datasets: [{ data: [72,18,10], backgroundColor: ['#10b981','#9ca3af','#f87171'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+                });
+            }
+            if (document.getElementById('yearlyProfitChart')) {
+                yearlyProfitChart = new Chart(document.getElementById('yearlyProfitChart'), {
+                    type: 'pie',
+                    data: { labels: ['Jan','Feb','Mar','Apr','May'], datasets: [{ data: [42500,68000,52000,-15000,37500], backgroundColor: ['#f59e0b','#d97706','#fbbf24','#f87171','#10b981'] }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+        // ---------- INIT ----------
+        window.onload = function() {
+            initializeCharts();
+            loadProfile();
+            loadWatchesForDeletion();
+            initializeDemoOrders();
+            displayOrderCards();
+            // close sidebar on resize to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) { document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebarBackdrop').classList.remove('active'); }
+            });
+        };
+    </script>
+</body>
+</html>
